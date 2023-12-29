@@ -1,25 +1,22 @@
 #!/usr/bin/python3
 """This is the base model class for AirBnB"""
+from sqlalchemy.ext.declarative import declarative_base
 import uuid
 import models
 from datetime import datetime
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, DateTime
 
-# create Base object for task 6
+
 Base = declarative_base()
 
 
-class BaseModel():
+class BaseModel:
     """This class will defines all common attributes/methods
     for other classes
     """
-    ''' Update class definition to use SQLAlchemy
-    '''
-    # attributes for task 6
-    id = Column(String(60), primary_key=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    id = Column(String(60), unique=True, nullable=False, primary_key=True)
+    created_at = Column(DateTime, nullable=False, default=(datetime.utcnow()))
+    updated_at = Column(DateTime, nullable=False, default=(datetime.utcnow()))
 
     def __init__(self, *args, **kwargs):
         """Instantiation of base model class
@@ -32,23 +29,20 @@ class BaseModel():
             updated_at: updated date
         """
         if kwargs:
-            # Aiko's change for taks 2
-            # self.id = str(uuid.uuid4())
             for key, value in kwargs.items():
                 if key == "created_at" or key == "updated_at":
                     value = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
                 if key != "__class__":
                     setattr(self, key, value)
-            # Aiko's change for task2
-            # models.storage.new(self)
+            if "id" not in kwargs:
+                self.id = str(uuid.uuid4())
+            if "created_at" not in kwargs:
+                self.created_at = datetime.now()
+            if "updated_at" not in kwargs:
+                self.updated_at = datetime.now()
         else:
-            # unique id
             self.id = str(uuid.uuid4())
-            # datetime when is created
             self.created_at = self.updated_at = datetime.now()
-            # move it to save method for task 6
-            # afecta guardar de la 2
-            # models.storage.new(self)
 
     def __str__(self):
         """returns a string
@@ -66,10 +60,7 @@ class BaseModel():
     def save(self):
         """updates the public instance attribute updated_at to current
         """
-        self.created_at = datetime.now()
         self.updated_at = datetime.now()
-        # moved from def __init__(self, *args, **kwargs) to here task 6
-        # afecta el guardar de la 2
         models.storage.new(self)
         models.storage.save()
 
@@ -82,15 +73,11 @@ class BaseModel():
         my_dict["__class__"] = str(type(self).__name__)
         my_dict["created_at"] = self.created_at.isoformat()
         my_dict["updated_at"] = self.updated_at.isoformat()
-        # update for task6
-        # pendiente revisar task2
-        key_to_delete = "_sa_instance_state"
-        if key_to_delete in my_dict:
-            del my_dict[key_to_delete]
-
+        if '_sa_instance_state' in my_dict.keys():
+            del my_dict['_sa_instance_state']
         return my_dict
 
-    # Need to implement functionality for AirBnB_V2
     def delete(self):
-        """delete the current instance from the storage """
+        """ delete object
+        """
         models.storage.delete(self)

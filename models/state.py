@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 """This is the state class"""
-import models
-from os import getenv
-from models.base_model import BaseModel
-from models.city import City, Base
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column,  Integer, String
+from models.base_model import BaseModel, Base
 from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String
+import models
+from models.city import City
+import shlex
 
 
 class State(BaseModel, Base):
@@ -14,23 +14,22 @@ class State(BaseModel, Base):
     Attributes:
         name: input name
     """
-    # Added for task 6
-    # if getenv("HBNB_TYPE_STORAGE") == "db":
     __tablename__ = "states"
     name = Column(String(128), nullable=False)
-    if getenv("HBNB_TYPE_STORAGE") == "db":
-        cities = relationship('City', backref='state', cascade="all, delete")
-    else:
-        name = ""
+    cities = relationship("City", cascade='all, delete, delete-orphan',
+                          backref="state")
 
-        # Added for task 6
-        # if getenv("HBNB_TYPE_STORAGE") == "file":
-        @property
-        def cities(self):
-            list_of_cities = []
-            dic_cities = models.storage.all(City)
-            # for city in dic_cities.items():
-            for city in dic_cities.values():
-                if city.state_id == self.id:
-                    list_of_cities.append(city)
-            return list_of_cities
+    @property
+    def cities(self):
+        var = models.storage.all()
+        lista = []
+        result = []
+        for key in var:
+            city = key.replace('.', ' ')
+            city = shlex.split(city)
+            if (city[0] == 'City'):
+                lista.append(var[key])
+        for elem in lista:
+            if (elem.state_id == self.id):
+                result.append(elem)
+        return (result)
